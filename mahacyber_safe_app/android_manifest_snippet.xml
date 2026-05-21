@@ -1,0 +1,34 @@
+<!--
+  Drop these <uses-permission> lines inside the <manifest> tag in
+  android/app/src/main/AndroidManifest.xml (after `flutter create` generates it).
+
+  Also bump minSdk to 23 in android/app/build.gradle(.kts).
+-->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.CALL_PHONE" />
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
+<uses-permission android:name="android.permission.READ_CONTACTS" />
+<uses-permission android:name="android.permission.VIBRATE" />
+
+<!--
+  Required for opening tel: links from the SOS screen on Android 11+.
+  Put inside <queries> at the root of <manifest>.
+-->
+<!--
+<queries>
+    <intent>
+        <action android:name="android.intent.action.DIAL" />
+        <data android:scheme="tel" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+    </intent>
+</queries>
+-->

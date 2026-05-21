@@ -1,0 +1,50 @@
+# Secrets
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Flutter / Dart
+mahacyber_safe_app/build/
+mahacyber_safe_app/.dart_tool/
+mahacyber_safe_app/.flutter-plugins
+mahacyber_safe_app/.flutter-plugins-dependencies
+mahacyber_safe_app/.packages
+mahacyber_safe_app/.pub-cache/
+mahacyber_safe_app/.pub/
+mahacyber_safe_app/ios/Pods/
+mahacyber_safe_app/ios/.symlinks/
+mahacyber_safe_app/ios/Flutter/Flutter.framework
+mahacyber_safe_app/ios/Flutter/Flutter.podspec
+mahacyber_safe_app/android/.gradle/
+mahacyber_safe_app/android/app/build/
+mahacyber_safe_app/android/local.properties
+mahacyber_safe_app/android/key.properties
+mahacyber_safe_app/android/**/gradle-wrapper.jar
+mahacyber_safe_app/**/*.g.dart
+mahacyber_safe_app/**/*.freezed.dart
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Big files / artifacts not meant for git
+folder.zip
+*.apk
+TenderDocument.pdf
+
+# Runtime data
+server_data/*.json
+!server_data/.gitkeep

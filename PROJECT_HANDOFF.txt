@@ -1,0 +1,222 @@
+================================================================================
+MAHACYBER SAFE — PROJECT HANDOFF / RESUME DOCUMENT
+================================================================================
+Purpose: Paste this file (or its contents) at the start of a fresh Claude Code
+session so it can pick up exactly where the previous session left off without
+re-discovering everything. Keep this file updated as the project evolves.
+
+Last updated: 2026-05-15
+Owner: naveengawande@gmail.com
+Working directory: C:\MahaCyberSafe
+Repo: not a git repo yet (consider `git init` before sharing)
+
+================================================================================
+1. WHAT WE'RE BUILDING
+================================================================================
+A citizen cybersecurity companion app for Maharashtra State Cyber Department,
+per the 54-page tender at C:\MahaCyberSafe\TenderDocument.pdf.
+
+The user's stated priority (verbatim):
+  "My primary goal right now is using RASP and make a prototype of the app
+   first and then, later on add some USP's to it make it more enhanced"
+
+So the headline differentiator is **freeRASP (Talsec)** — runtime app
+self-protection wired into every screen. Phase 1 = working Flutter prototype.
+Phase 2+ (backend, admin portal, real threat-intel APIs, ML, publishing) comes
+after the prototype is validated.
+
+================================================================================
+2. TECH STACK (LOCKED IN)
+================================================================================
+- Flutter 3.41.9 stable (Dart 3.11.5) — installed at C:\src\flutter
+- freeRASP 7.5.1 (Talsec) — OSS Flutter RASP plugin
+- Material 3 + Google Fonts Inter
+- GoRouter 14.x (declarative navigation)
+- Provider 6.x (ChangeNotifier — lightweight, NOT Bloc/Riverpod)
+- mobile_scanner 5.x (QR)
+- network_info_plus (Wi-Fi inspection)
+- permission_handler (runtime permissions)
+- Android minSdk 23 (freeRASP requirement)
+- Java 17 for Android builds
+- Multilingual scaffolded: en / hi / mr (English / Hindi / Marathi)
+
+Target compliance: OWASP MASVS, ISO 27001, NIST CSF, CERT-In.
+
+================================================================================
+3. PROJECT STRUCTURE
+================================================================================
+C:\MahaCyberSafe\
+├── TenderDocument.pdf              # the 54-page RFP (read-only reference)
+├── PROJECT_HANDOFF.txt             # THIS FILE
+└── mahacyber_safe_app\             # the Flutter project
+    ├── pubspec.yaml                # deps; intl pinned to ^0.20.2
+    ├── README.md                   # setup + architecture + future USPs
+    ├── android_manifest_snippet.xml  # reference snippet (already applied)
+    ├── android\
+    │   └── app\
+    │       ├── build.gradle.kts                  # minSdk=23 (freeRASP req)
+    │       └── src\main\AndroidManifest.xml      # 11 permissions + queries
+    ├── ios\                        # iOS Info.plist needs perms (see README)
+    └── lib\
+        ├── main.dart               # bootstraps RASP BEFORE runApp
+        ├── app.dart                # MaterialApp.router + locales
+        ├── core\
+        │   ├── rasp\
+        │   │   ├── rasp_service.dart        # ★ MOST IMPORTANT FILE
+        │   │   └── rasp_status_banner.dart
+        │   ├── theme\app_theme.dart         # AppColors + Material 3
+        │   ├── router\app_router.dart       # 12 routes
+        │   ├── constants\
+        │   └── services\url_safety_service.dart  # offline URL heuristic
+        └── features\
+            ├── splash\
+            ├── auth\                 # login + guest mode (mocked)
+            ├── home\home_screen.dart  # dashboard + RASP banner + SOS
+            ├── scanners\              # QR, URL, Wi-Fi
+            ├── breach\                # mocked HIBP / XposedOrNot
+            ├── permissions\           # this app's own permissions
+            ├── advisor\security_advisor_screen.dart  # live score from RASP
+            ├── news\                  # static seed cyber news
+            ├── sos\                   # quick-dial helplines
+            └── rasp_status\rasp_status_screen.dart   # threat log
+
+================================================================================
+4. THE 12 ROUTES (GoRouter)
+================================================================================
+splash → login → home → {qr-scanner, url-scanner, wifi-scanner, breach-check,
+permissions, advisor, news, sos, rasp-status}
+
+================================================================================
+5. ALL 16 TALSEC RASP CALLBACKS (wired in rasp_service.dart)
+================================================================================
+onAppIntegrity, onDebug, onDeviceBinding, onDeviceID, onHooks, onPasscode,
+onPrivilegedAccess, onScreenshot, onScreenRecording,
+onSecureHardwareNotAvailable, onSimulator, onSystemVPN, onUnofficialStore,
+onObfuscationIssues, onDevMode, onMalware
+
+Severity tiers: low / medium / high / critical
+Each threat carries citizen-friendly advice. Repeated threats are de-duplicated
+within a session.
+
+================================================================================
+6. CRITICAL PLACEHOLDERS (MUST REPLACE BEFORE RELEASE)
+================================================================================
+File: lib/core/rasp/rasp_service.dart
+
+  androidConfig: AndroidConfig(
+    packageName: 'in.gov.maharashtracyber.safe',
+    signingCertHashes: const ['AAAA...AA='], // TODO: real SHA-256 (base64)
+  ),
+  iosConfig: IOSConfig(
+    bundleIds: const ['in.gov.maharashtracyber.safe'],
+    teamId: 'XXXXXXXXXX', // TODO: Apple Team ID
+  ),
+  watcherMail: 'security@maharashtracyber.gov.in', // TODO: real inbox
+
+To get the Android signing-cert SHA-256:
+  keytool -list -v -keystore release.keystore -alias <alias>
+  # hex → bytes → base64
+
+================================================================================
+7. ANDROID MANIFEST — ALREADY APPLIED
+================================================================================
+File: android/app/src/main/AndroidManifest.xml
+
+Permissions added (11):
+  CAMERA, INTERNET, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION,
+  ACCESS_WIFI_STATE, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, CALL_PHONE,
+  READ_PHONE_STATE, READ_CONTACTS, VIBRATE
+
+Intent queries added: tel:, https:, text/plain PROCESS_TEXT
+App label: "MahaCyber Safe"
+
+================================================================================
+8. CURRENT BUILD STATE & PENDING BLOCKERS
+================================================================================
+✅ Done:
+  - Flutter SDK installed (C:\src\flutter, on PATH)
+  - All Dart source files written (lib/**)
+  - pubspec.yaml resolved (107 packages, freerasp 7.5.1)
+  - Android manifest + minSdk 23 applied
+
+⏳ Pending (in order):
+  1. ENABLE WINDOWS DEVELOPER MODE
+       Why: flutter pub get fails with "Building with plugins requires symlink
+       support. Please enable Developer Mode in your system settings."
+       How: run `start ms-settings:developers` → toggle Developer Mode ON
+  2. Re-run `flutter pub get` to complete plugin registration
+  3. Choose a path:
+       PATH A — Quick UI preview in Edge:
+           flutter run -d edge
+         Pros: instant, no Android Studio needed
+         Cons: RASP banner stays "Initialising…" (freeRASP is mobile-only)
+       PATH B — Real RASP testing on Android:
+           Install Android Studio (~1.5 GB) → SDK → emulator/device
+           flutter run -d android
+         Pros: real freeRASP detection works
+         Cons: ~1.5 GB download, more setup
+  4. (Before release) replace freeRASP placeholders listed in section 6
+  5. (Optional) git init + first commit
+
+`flutter devices` currently shows: Windows desktop + Edge web.
+`flutter doctor` flags: Android toolchain missing, Visual Studio missing.
+
+================================================================================
+9. KNOWN ERRORS WE'VE ALREADY FIXED (don't redo)
+================================================================================
+- "flutter not recognized" → installed manually from
+  storage.googleapis.com/flutter_infra_release (winget had no package),
+  extracted to C:\src\flutter, added C:\src\flutter\bin to user PATH.
+- intl 0.19.0 vs flutter_localizations conflict → bumped to ^0.20.2.
+- `generate: true` in pubspec without l10n.yaml → removed pre-emptively.
+
+================================================================================
+10. FUTURE USPs (per user — AFTER prototype lands)
+================================================================================
+- UPI safety mode (detect risky collect-requests / fake refunds)
+- SIM-swap detector (telecom USSD + device binding diff)
+- Family circle (parents/kids shared advisories)
+- Voice-first cyber assistant in Marathi/Hindi (TTS)
+- On-device ML to classify SMS/notifications as phishing
+- Public trust-score REST endpoint shareable with banks/UPI apps
+- Offline-first cyber awareness courses + badges
+
+Phase 2+ heavy items (from RFP):
+- .NET Core 7 + MS SQL backend + JWT auth
+- Real threat-intel APIs (VirusTotal, APIVoid, XposedOrNot, CERT-In feed)
+- FCM/APNs push
+- Hidden apps detection, adware scan, threat analyzer
+- OTP / call-forwarding status check
+- Admin web portal (React)
+- Play Store / App Store signing & publishing
+- ISO 27001 / OWASP MASVS audit prep
+
+================================================================================
+11. HOW TO RESUME IN A NEW CLAUDE CODE SESSION
+================================================================================
+Open a new session in C:\MahaCyberSafe and say something like:
+
+  "Read PROJECT_HANDOFF.txt and continue. Dev Mode is now ON, let's go with
+   Path A (Edge preview) first."
+
+OR
+
+  "Read PROJECT_HANDOFF.txt. I want to go Path B — install Android Studio and
+   get real RASP working on a device."
+
+That single instruction + this file = enough context to continue in one go.
+
+================================================================================
+12. QUICK COMMAND CHEAT SHEET
+================================================================================
+  cd C:\MahaCyberSafe\mahacyber_safe_app
+  flutter pub get              # resolve deps (needs Dev Mode ON)
+  flutter devices              # list run targets
+  flutter run -d edge          # Path A: web UI preview
+  flutter run -d android       # Path B: real RASP on Android
+  flutter build apk --release  # release APK (after placeholders replaced)
+  flutter doctor -v            # diagnose toolchain gaps
+
+================================================================================
+END OF HANDOFF — keep this file in sync as the project evolves.
+================================================================================

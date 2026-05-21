@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberSafe — Admin Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; transition: background-color 0.3s, color 0.3s; }
+    .nav-link.active { background: rgba(37, 99, 235, 0.1); color: rgb(37, 99, 235); border-left: 3px solid rgb(37, 99, 235); }
+    .badge { padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+    .badge-low { background: #DBEAFE; color: #1D4ED8; }
+    .badge-med { background: #FEF3C7; color: #92400E; }
+    .badge-high { background: #FED7AA; color: #9A3412; }
+    .badge-crit { background: #FECACA; color: #991B1B; }
+    .badge-ok { background: #D1FAE5; color: #065F46; }
+    .modal-bg { background: rgba(0,0,0,0.5); }
+
+    /* Footer */
+    .admin-footer {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-top: 1px solid #e2e8f0;
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .admin-footer .footer-left {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .admin-footer .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-footer .footer-right span {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-footer .footer-right img {
+      height: 28px;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    .admin-footer .footer-right img:hover {
+      opacity: 1;
+    }
+
+    /* Dark Mode Toggle Button */
+    .dark-toggle {
+      width: 44px; height: 24px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      border: none; cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .dark-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: transform 0.3s, background 0.3s;
+    }
+    .dark-toggle.active {
+      background: #6366f1;
+    }
+    .dark-toggle.active::after {
+      transform: translateX(20px);
+      background: #1e1b4b;
+    }
+    .dark-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dark-toggle-wrap .toggle-icon {
+      font-size: 14px; line-height: 1;
+    }
+
+    /* ========= DARK MODE (opt-in via toggle) ========= */
+    body.dark { background-color: #0c1222; color: #e2e8f0; }
+
+    /* Login screen */
+    body.dark #login-screen { background: linear-gradient(135deg, #0c1222 0%, #1a1040 100%); }
+    body.dark #login-screen > div { background: #141c2e; border: 1px solid #1e293b; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+    body.dark #login-screen h1 { color: #f1f5f9; }
+    body.dark #login-screen p { color: #64748b; }
+    body.dark #login-screen label { color: #94a3b8; }
+    body.dark #login-screen input,
+    body.dark #login-screen select { background: #0f1829; border-color: #1e293b; color: #e2e8f0; }
+    body.dark #login-screen input:focus,
+    body.dark #login-screen select:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }
+    body.dark #login-screen button[type="submit"] { background: #6366f1; }
+    body.dark #login-screen button[type="submit"]:hover { background: #4f46e5; }
+
+    /* Sidebar */
+    body.dark aside { background: #0f1629 !important; border-right-color: #1e293b !important; }
+    body.dark aside .border-b { border-color: #1e293b !important; }
+    body.dark aside .border-t { border-color: #1e293b !important; }
+    body.dark aside .font-bold { color: #f1f5f9 !important; }
+    body.dark aside .text-xs.text-slate-500 { color: #64748b !important; }
+    body.dark .nav-link { color: #94a3b8 !important; }
+    body.dark .nav-link:hover { background: rgba(99, 102, 241, 0.08) !important; }
+    body.dark .nav-link.active { background: rgba(99, 102, 241, 0.15) !important; color: #818cf8 !important; border-left-color: #6366f1 !important; }
+    body.dark .nav-link svg { stroke: currentColor; }
+    body.dark aside button[onclick="logout()"] { color: #94a3b8 !important; }
+    body.dark aside button[onclick="logout()"]:hover { color: #f87171 !important; }
+    body.dark #userInitial { background: rgba(99,102,241,0.2) !important; color: #818cf8 !important; }
+    body.dark #userName { color: #e2e8f0 !important; }
+    body.dark #userRole { color: #64748b !important; }
+
+    /* Header */
+    body.dark header { background: #111827 !important; border-bottom-color: #1e293b !important; }
+    body.dark #pageTitle { color: #f1f5f9 !important; }
+    body.dark header .text-xs.text-slate-500 { color: #64748b !important; }
+    body.dark header select { background: #1e293b !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+
+    /* Content area */
+    body.dark #content { background: #0c1222; }
+
+    /* Cards & panels */
+    body.dark .bg-white { background: #141c2e !important; }
+    body.dark .border-slate-200, body.dark .border { border-color: #1e293b !important; }
+    body.dark .border-t { border-color: #1e293b !important; }
+    body.dark .border-b { border-color: #1e293b !important; }
+    body.dark .divide-y > * + * { border-color: #1e293b !important; }
+
+    /* Text colors */
+    body.dark .text-slate-900 { color: #f1f5f9 !important; }
+    body.dark .text-slate-800 { color: #e2e8f0 !important; }
+    body.dark .text-slate-700 { color: #cbd5e1 !important; }
+    body.dark .text-slate-600 { color: #94a3b8 !important; }
+    body.dark .text-slate-500 { color: #64748b !important; }
+    body.dark .text-slate-400 { color: #475569 !important; }
+    body.dark .text-slate-300 { color: #94a3b8 !important; }
+    body.dark .font-semibold { color: #e2e8f0; }
+    body.dark .font-medium { color: #cbd5e1; }
+
+    /* Tables */
+    body.dark .bg-slate-50 { background: #111827 !important; }
+    body.dark thead { background: #111827 !important; }
+    body.dark tbody tr:hover { background: rgba(99,102,241,0.06) !important; }
+    body.dark th { color: #64748b !important; }
+
+    /* Inputs & selects inside content */
+    body.dark #content input,
+    body.dark #content select,
+    body.dark #content textarea { background: #0f1829 !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
+    body.dark #content input:focus,
+    body.dark #content select:focus,
+    body.dark #content textarea:focus { border-color: #6366f1 !important; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }
+    body.dark #content input::placeholder,
+    body.dark #content textarea::placeholder { color: #475569 !important; }
+
+    /* Buttons inside content */
+    body.dark #content .bg-blue-600 { background: #6366f1 !important; }
+    body.dark #content .bg-blue-600:hover, body.dark #content .hover\:bg-blue-700:hover { background: #4f46e5 !important; }
+    body.dark #content .bg-red-600 { background: #dc2626 !important; }
+    body.dark #content .text-blue-600 { color: #818cf8 !important; }
+    body.dark #content .text-blue-700 { color: #a5b4fc !important; }
+    body.dark #content .text-red-600 { color: #f87171 !important; }
+    body.dark #content .text-green-600 { color: #34d399 !important; }
+    body.dark #content .text-green-700 { color: #6ee7b7 !important; }
+    body.dark #content .text-amber-600 { color: #fbbf24 !important; }
+
+    /* Stat card highlight backgrounds */
+    body.dark .bg-red-50 { background: rgba(239,68,68,0.1) !important; }
+    body.dark .bg-blue-100 { background: rgba(99,102,241,0.2) !important; }
+
+    /* Badges in dark mode - slightly adjusted for contrast */
+    body.dark .badge-low { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    body.dark .badge-med { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    body.dark .badge-high { background: rgba(249,115,22,0.15); color: #fb923c; }
+    body.dark .badge-crit { background: rgba(239,68,68,0.15); color: #f87171; }
+    body.dark .badge-ok { background: rgba(52,211,153,0.15); color: #34d399; }
+
+    /* Footer dark */
+    body.dark .admin-footer {
+      background: linear-gradient(135deg, #0f1629 0%, #111827 100%) !important;
+      border-top-color: #1e293b !important;
+    }
+    body.dark .admin-footer .footer-right img {
+      filter: brightness(1.2);
+    }
+
+    /* Modal dark */
+    body.dark .modal-bg { background: rgba(0,0,0,0.7); }
+    body.dark #modal .bg-white { background: #141c2e !important; }
+    body.dark #modal h3 { color: #f1f5f9 !important; }
+    body.dark #modal input,
+    body.dark #modal select,
+    body.dark #modal textarea { background: #0f1829 !important; border-color: #1e293b !important; color: #e2e8f0 !important; }
+    body.dark #modal .border { border-color: #1e293b !important; }
+    body.dark #modal .bg-slate-50 { background: #111827 !important; }
+
+    /* Checkbox styling in dark */
+    body.dark input[type="checkbox"] { accent-color: #6366f1; }
+
+    /* Scrollbar dark */
+    body.dark ::-webkit-scrollbar { width: 8px; }
+    body.dark ::-webkit-scrollbar-track { background: #0c1222; }
+    body.dark ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    body.dark ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Smooth transitions */
+    aside, main, header, .bg-white, .admin-footer, .badge, input, select, textarea {
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+
+    /* ============================================================
+       CYBER COMMAND-CENTER (dark) — purple+teal aurora glassmorphism
+       Active when body.dark — overrides the legacy indigo dark rules.
+       ============================================================ */
+    body.dark {
+      background:
+        radial-gradient(ellipse 1100px 600px at 85% -10%, rgba(124,58,237,0.18), transparent 65%),
+        radial-gradient(ellipse 1000px 500px at -10% 110%, rgba(6,182,212,0.10), transparent 60%),
+        #0A0A0F !important;
+      color: #F5F5F7 !important;
+    }
+    body.dark::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.020) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.020) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    body.dark #app, body.dark aside, body.dark main { position: relative; z-index: 1; }
+
+    /* Sidebar — translucent dark glass with purple accent rail */
+    body.dark aside {
+      background: linear-gradient(180deg, rgba(15,12,25,0.85), rgba(10,10,15,0.85)) !important;
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border-right: 1px solid rgba(124,58,237,0.20) !important;
+    }
+    body.dark aside .border-b, body.dark aside .border-t { border-color: rgba(255,255,255,0.06) !important; }
+    body.dark aside .font-bold { color: #F5F5F7 !important; }
+    body.dark .nav-link { color: #B8B0CC !important; margin: 2px 12px; border-radius: 10px; padding-left: 14px !important; padding-right: 14px !important; border-left: none !important; }
+    body.dark .nav-link:hover { background: rgba(124,58,237,0.10) !important; color: #F5F5F7 !important; }
+    body.dark .nav-link.active {
+      background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%) !important;
+      color: #FFFFFF !important;
+      border-left: none !important;
+      box-shadow: 0 8px 20px -4px rgba(124,58,237,0.50), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    }
+    body.dark .nav-link.active svg { color: #FFFFFF !important; }
+    body.dark #userInitial { background: linear-gradient(135deg, rgba(124,58,237,0.30), rgba(236,72,153,0.20)) !important; color: #F5F5F7 !important; border: 1px solid rgba(124,58,237,0.30); }
+    body.dark #userName { color: #F5F5F7 !important; }
+    body.dark #userRole { color: #8F8AA8 !important; }
+    body.dark aside button[onclick="logout()"] { color: #B8B0CC !important; }
+    body.dark aside button[onclick="logout()"]:hover { color: #F87171 !important; }
+
+    /* Header */
+    body.dark header {
+      background: rgba(15,12,25,0.70) !important;
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border-bottom: 1px solid rgba(124,58,237,0.18) !important;
+    }
+    body.dark #pageTitle { color: #F5F5F7 !important; letter-spacing: 0.2px; }
+    body.dark header select { background: rgba(20,18,30,0.7) !important; border-color: rgba(255,255,255,0.10) !important; color: #F5F5F7 !important; }
+    body.dark header .text-xs.text-slate-500 { color: #8F8AA8 !important; }
+
+    /* Content + cards as glass panels */
+    body.dark #content { background: transparent !important; }
+    body.dark .bg-white {
+      background: rgba(20,18,30,0.55) !important;
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.06) !important;
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.55), 0 0 0 1px rgba(124,58,237,0.08) inset;
+    }
+    body.dark .border-slate-200, body.dark .border { border-color: rgba(255,255,255,0.06) !important; }
+    body.dark .border-t, body.dark .border-b, body.dark .divide-y > * + * { border-color: rgba(255,255,255,0.05) !important; }
+
+    /* Text */
+    body.dark .text-slate-900, body.dark .text-slate-800 { color: #F5F5F7 !important; }
+    body.dark .text-slate-700 { color: #D4D0E0 !important; }
+    body.dark .text-slate-600 { color: #B8B0CC !important; }
+    body.dark .text-slate-500, body.dark .text-slate-400 { color: #8F8AA8 !important; }
+    body.dark .text-slate-300 { color: #B8B0CC !important; }
+    body.dark .font-semibold { color: #F5F5F7; }
+
+    /* Metric cards — sharp vibrant numerics in JetBrains Mono */
+    body.dark .bg-white .text-3xl.font-bold.text-slate-900 {
+      font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace !important;
+      font-weight: 700 !important;
+      font-size: 30px !important;
+      letter-spacing: -0.5px !important;
+      color: #FFFFFF !important;
+      background: linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.dark .text-blue-600, body.dark .text-blue-700 { color: #A78BFA !important; }
+    body.dark .text-green-600, body.dark .text-green-700 { color: #34D399 !important; }
+    body.dark .text-red-600, body.dark .text-red-700 { color: #F87171 !important; }
+    body.dark .text-amber-600, body.dark .text-amber-700 { color: #FBBF24 !important; }
+    body.dark .text-purple-700 { color: #C4B5FD !important; }
+    body.dark .text-pink-700  { color: #F472B6 !important; }
+
+    /* Tables — alternating subtle rows + crisp typography */
+    body.dark .bg-slate-50, body.dark thead { background: rgba(124,58,237,0.06) !important; }
+    body.dark th { color: #8F8AA8 !important; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; }
+    body.dark tbody tr { border-color: rgba(255,255,255,0.04) !important; }
+    body.dark tbody tr:nth-child(odd) { background: rgba(255,255,255,0.02) !important; }
+    body.dark tbody tr:hover { background: rgba(124,58,237,0.07) !important; }
+
+    /* Status dots helper (used by Recent activity) */
+    body.dark .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    body.dark .status-dot.ok    { background: #34D399; box-shadow: 0 0 8px #34D399; }
+    body.dark .status-dot.warn  { background: #FBBF24; box-shadow: 0 0 8px #FBBF24; }
+    body.dark .status-dot.crit  { background: #F87171; box-shadow: 0 0 8px #F87171; }
+
+    /* Inputs */
+    body.dark #content input, body.dark #content select, body.dark #content textarea {
+      background: rgba(10,10,15,0.6) !important;
+      border-color: rgba(255,255,255,0.08) !important;
+      color: #F5F5F7 !important;
+    }
+    body.dark #content input:focus, body.dark #content select:focus, body.dark #content textarea:focus {
+      border-color: #7C3AED !important;
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.25) !important;
+    }
+    body.dark #content input::placeholder, body.dark #content textarea::placeholder { color: #71717A !important; }
+
+    /* Buttons */
+    body.dark #content .bg-blue-600 { background: linear-gradient(135deg, #7C3AED, #EC4899) !important; color: #FFFFFF !important; }
+    body.dark #content .bg-blue-600:hover, body.dark #content .hover\:bg-blue-700:hover { background: linear-gradient(135deg, #6D28D9, #DB2777) !important; }
+    body.dark #content .bg-red-600 { background: linear-gradient(135deg, #EF4444, #B91C1C) !important; }
+
+    /* Stat-card highlights */
+    body.dark .bg-red-50 { background: rgba(248,113,113,0.10) !important; }
+    body.dark .bg-blue-100 { background: rgba(124,58,237,0.16) !important; }
+
+    /* Badges — neon pills */
+    body.dark .badge-low  { background: rgba(124,58,237,0.16); color: #C4B5FD; border: 1px solid rgba(124,58,237,0.35); }
+    body.dark .badge-med  { background: rgba(251,191,36,0.14); color: #FBBF24; border: 1px solid rgba(251,191,36,0.30); }
+    body.dark .badge-high { background: rgba(249,115,22,0.14); color: #FB923C; border: 1px solid rgba(249,115,22,0.30); }
+    body.dark .badge-crit { background: rgba(248,113,113,0.14); color: #F87171; border: 1px solid rgba(248,113,113,0.32); }
+    body.dark .badge-ok   { background: rgba(52,211,153,0.14); color: #34D399; border: 1px solid rgba(52,211,153,0.30); }
+
+    /* Footer — 1px purple gradient hairline above */
+    body.dark .admin-footer {
+      background: linear-gradient(180deg, rgba(15,12,25,0.85), rgba(10,10,15,0.95)) !important;
+      border-top: none !important;
+      position: relative;
+    }
+    body.dark .admin-footer::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.65) 50%, transparent 100%);
+    }
+    body.dark .admin-footer .footer-left, body.dark .admin-footer .footer-right span { color: #8F8AA8 !important; }
+    body.dark .admin-footer .footer-right img { filter: brightness(1.25) drop-shadow(0 0 6px rgba(124,58,237,0.30)); }
+
+    /* Modal */
+    body.dark .modal-bg { background: rgba(5,3,12,0.78); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+    /* Charts canvas — subtle glow */
+    body.dark canvas { filter: drop-shadow(0 0 12px rgba(6,182,212,0.18)); }
+
+    /* Scrollbar */
+    body.dark ::-webkit-scrollbar { width: 10px; height: 10px; }
+    body.dark ::-webkit-scrollbar-track { background: #0A0A0F; }
+    body.dark ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.30); border-radius: 5px; border: 2px solid #0A0A0F; }
+    body.dark ::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.55); }
+
+    /* Dark-toggle pill */
+    body.dark .dark-toggle { background: rgba(124,58,237,0.28); }
+    body.dark .dark-toggle.active::after { background: #EC4899; }
+
+    /* ---- Cyber-dark patches (issue fixes) ---- */
+
+    /* Sidebar stability — keep it pinned at 256px regardless of page content.
+       Long un-wrapped strings (news titles, audit detail) were stretching
+       min-content and pushing the flex container wider, squeezing the aside. */
+    aside { flex: 0 0 16rem !important; }   /* 16rem = w-64 */
+    main  { min-width: 0; }
+    body.dark #content { min-width: 0; overflow-x: hidden; }
+    body.dark #content table { table-layout: auto; }
+    body.dark #content .truncate { min-width: 0; }
+
+    /* Hover backgrounds — tailwind's `hover:bg-slate-50` was rendering as a
+       near-white panel on dark, making rows flash bright. Repaint to a soft
+       purple wash and keep text colors steady. */
+    body.dark .hover\:bg-slate-50:hover,
+    body.dark a.hover\:bg-slate-50:hover {
+      background: rgba(124,58,237,0.08) !important;
+    }
+    /* Steady text on hover — never go white-on-white. */
+    body.dark .hover\:bg-slate-50:hover .text-slate-900,
+    body.dark .hover\:bg-slate-50:hover h4,
+    body.dark .hover\:bg-slate-50:hover .font-semibold,
+    body.dark .hover\:bg-slate-50:hover .font-medium { color: #F5F5F7 !important; }
+    body.dark .hover\:bg-slate-50:hover .text-slate-600 { color: #B8B0CC !important; }
+    body.dark .hover\:bg-slate-50:hover .text-slate-500 { color: #8F8AA8 !important; }
+    body.dark .hover\:bg-slate-50:hover .text-slate-400 { color: #71717A !important; }
+
+    /* Stylish CyberSafe wordmark on login */
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      text-align: left;
+    }
+    .brand-lockup--left {
+      justify-content: flex-start;
+    }
+    .brand-shield {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      flex-shrink: 0;
+      filter: drop-shadow(0 6px 18px rgba(124, 58, 237, 0.40));
+    }
+    .brand-wordmark {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin: 0;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 1px;
+      text-shadow: 0 2px 14px rgba(124, 58, 237, 0.30);
+    }
+    .brand-wordmark .brand-cyber {
+      background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 50%, #EC4899 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.35));
+    }
+    .brand-wordmark .brand-safe {
+      color: #0F172A;
+      font-weight: 900;
+      position: relative;
+    }
+    .brand-wordmark .brand-safe::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -4px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #7C3AED, #EC4899, transparent);
+      border-radius: 2px;
+      opacity: 0.7;
+    }
+    body.dark .brand-wordmark .brand-safe { color: #F5F5F7; }
+
+    /* Login screen — photographic background with dark overlay */
+    #login-screen {
+      position: relative;
+      background-image:
+        linear-gradient(135deg, rgba(10,10,15,0.78) 0%, rgba(46,16,101,0.72) 55%, rgba(10,10,15,0.85) 100%),
+        url('assets/login_bg.jpg') !important;
+      background-size: cover, cover !important;
+      background-position: center, center !important;
+      background-repeat: no-repeat, no-repeat !important;
+    }
+    /* Override tailwind blue gradient utility on login wrapper */
+    #login-screen.bg-gradient-to-br { background-image:
+        linear-gradient(135deg, rgba(10,10,15,0.78) 0%, rgba(46,16,101,0.72) 55%, rgba(10,10,15,0.85) 100%),
+        url('assets/login_bg.jpg') !important; }
+    body.dark #login-screen {
+      background-image:
+        linear-gradient(135deg, rgba(10,10,15,0.88) 0%, rgba(46,16,101,0.70) 55%, rgba(10,10,15,0.92) 100%),
+        radial-gradient(ellipse 900px 500px at 80% -10%, rgba(124,58,237,0.30), transparent 60%),
+        radial-gradient(ellipse 800px 500px at -10% 110%, rgba(6,182,212,0.18), transparent 60%),
+        url('assets/login_bg.jpg') !important;
+      background-size: cover, auto, auto, cover !important;
+      background-position: center, center, center, center !important;
+      background-repeat: no-repeat, no-repeat, no-repeat, no-repeat !important;
+      background-color: #0A0A0F !important;
+    }
+    body.dark #login-screen::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.020) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.020) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    body.dark #login-screen > div {
+      position: relative; z-index: 1;
+      background: rgba(20,18,30,0.62) !important;
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      border: 1px solid rgba(124,58,237,0.25) !important;
+      box-shadow:
+        0 30px 60px -20px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 0 40px -10px rgba(124,58,237,0.35) !important;
+    }
+    body.dark #login-screen h1 { color: #F5F5F7 !important; }
+    body.dark #login-screen p  { color: #8F8AA8 !important; }
+    body.dark #login-screen label { color: #B8B0CC !important; }
+    body.dark #login-screen input,
+    body.dark #login-screen select {
+      background: rgba(10,10,15,0.6) !important;
+      border-color: rgba(255,255,255,0.10) !important;
+      color: #F5F5F7 !important;
+    }
+    body.dark #login-screen input:focus,
+    body.dark #login-screen select:focus {
+      border-color: #7C3AED !important;
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.25) !important;
+      outline: none;
+    }
+    body.dark #login-screen input::placeholder { color: #71717A !important; }
+    body.dark #login-screen button[type="submit"] {
+      background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%) !important;
+      color: #FFFFFF !important;
+      font-weight: 700;
+      box-shadow: 0 10px 24px -8px rgba(124,58,237,0.55) !important;
+    }
+    body.dark #login-screen button[type="submit"]:hover {
+      background: linear-gradient(135deg, #6D28D9 0%, #DB2777 100%) !important;
+    }
+    /* Tailwind blue gradient is already overridden above with the photo + scrim */
+  </style>
+</head>
+
+<body class="bg-slate-50">
+
+  <!-- ============== LOGIN ============== -->
+  <div id="login-screen"
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-900 p-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+      <div class="mb-6" style="padding-top: 12px;">
+        <div class="brand-lockup brand-lockup--left">
+          <img src="assets/mahacybersafe_shield.png" alt="CyberSafe" class="brand-shield" />
+          <h1 class="brand-wordmark"><span class="brand-cyber">Cyber</span><span class="brand-safe">Safe</span></h1>
+        </div>
+        <p class="text-slate-500 text-sm mt-2 text-center" data-i18n="auth.subtitle">Administrative Console</p>
+      </div>
+      <form onsubmit="doLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="auth.username">Username</label>
+          <input id="username" type="text" value="admin"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="auth.password">Password</label>
+          <input id="password" type="password" value="admin"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="auth.role">Role</label>
+          <select id="role" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="admin" data-i18n="auth.role.admin">Administrator</option>
+            <option value="govt" data-i18n="auth.role.govt">Government Authority</option>
+          </select>
+        </div>
+        <button type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition"
+          data-i18n="auth.signin">Sign In</button>
+        <p class="text-xs text-slate-400 text-center">Demo credentials: admin / admin</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============== MAIN APP ============== -->
+  <div id="app" class="hidden h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
+      <div class="px-6 py-5 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+            <img src="assets/mahacybersafe_shield.png" alt="CyberSafe" class="w-12 h-12 object-contain" />
+          </div>
+          <div>
+            <div class="font-bold text-slate-900 text-lg leading-tight">CyberSafe</div>
+            <div class="text-xs text-slate-500">Admin Console</div>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 py-4 overflow-y-auto min-h-0">
+        <a onclick="nav('dashboard')"
+          class="nav-link active flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="dashboard">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a onclick="nav('users')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="users">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span data-i18n="nav.users">Users &amp; Roles</span>
+        </a>
+        <a onclick="nav('news')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="news">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+          <span data-i18n="nav.news">Cyber News &amp; Advisories</span>
+        </a>
+        <a onclick="nav('devices')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="devices">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <span data-i18n="nav.devices">Registered Devices</span>
+        </a>
+        <a onclick="nav('threats')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="threats">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span data-i18n="nav.threats">Threat Reports</span>
+        </a>
+        <a onclick="nav('scans')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="scans">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span data-i18n="nav.scans">Scan Analytics</span>
+        </a>
+        <a onclick="nav('sos')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="sos">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span data-i18n="nav.sos">SOS Incidents</span>
+        </a>
+        <a onclick="nav('grievances')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="grievances">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span data-i18n="nav.grievances">Citizen Grievances</span>
+        </a>
+        <a onclick="nav('audit')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="audit">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span data-i18n="nav.audit">Audit Trail</span>
+        </a>
+        <a onclick="nav('settings')"
+          class="nav-link flex items-center gap-3 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          data-route="settings">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span data-i18n="nav.settings">Settings &amp; APIs</span>
+        </a>
+      </nav>
+      <div class="p-4 border-t">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-700" id="userInitial">A</div>
+          <div class="text-xs">
+            <div class="font-semibold" id="userName">Admin</div>
+            <div class="text-slate-500" id="userRole">Administrator</div>
+          </div>
+        </div>
+        <button onclick="logout()" class="w-full text-xs text-slate-600 hover:text-red-600 py-2" data-i18n="auth.signout">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col min-h-0 min-w-0">
+      <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center flex-shrink-0">
+        <h2 id="pageTitle" class="text-xl font-bold text-slate-900">Dashboard</h2>
+        <div class="flex items-center gap-3">
+          <select id="langSelect" onchange="setLang(this.value)" class="text-xs border rounded px-2 py-1 bg-white">
+            <option value="en">🌐 English</option>
+            <option value="hi">🌐 हिन्दी</option>
+            <option value="mr">🌐 मराठी</option>
+          </select>
+          <span class="text-xs text-slate-500"><span data-i18n="topbar.lastSync">Last sync</span>: <span id="lastSync"></span></span>
+          <span class="badge badge-ok">● <span data-i18n="topbar.systemHealthy">System Healthy</span></span>
+          <div class="dark-toggle-wrap">
+            <span class="toggle-icon">☀️</span>
+            <button id="darkToggle" type="button" class="dark-toggle" title="Toggle dark mode"></button>
+            <span class="toggle-icon">🌙</span>
+          </div>
+        </div>
+      </header>
+      <div id="content" class="p-8 flex-1 overflow-y-auto"></div>
+      <!-- Footer -->
+      <footer class="admin-footer flex-shrink-0">
+        <div class="footer-left">
+          <img src="assets/mahacybersafe_shield.png" alt="CyberSafe" style="height: 22px;" />
+          <span>© 2026 CyberSafe</span>
+        </div>
+        <div class="footer-right">
+          <span>Powered by</span>
+          <a href="https://virtualgalaxy.in" target="_blank" rel="noopener">
+            <img src="assets/virtual_galaxy_logo.png" alt="Virtual Galaxy Infotech" title="Virtual Galaxy Infotech" />
+          </a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal Container -->
+  <div id="modal" class="hidden fixed inset-0 modal-bg z-50 flex items-center justify-center p-4"></div>
+
+  <script>
+    // ============ MOCK DATA ============
+    // ============ I18N ============
+    const I18N = {
+      en: {
+        'topbar.lastSync': 'Last sync',
+        'topbar.systemHealthy': 'System Healthy',
+        'auth.signin': 'Sign In',
+        'auth.signout': 'Sign Out',
+        'auth.username': 'Username',
+        'auth.password': 'Password',
+        'auth.role': 'Role',
+        'auth.role.admin': 'Administrator',
+        'auth.role.govt': 'Government Authority',
+        'auth.subtitle': 'Administrative Console',
+        'nav.dashboard': 'Dashboard',
+        'nav.users': 'Users & Roles',
+        'nav.news': 'Cyber News & Advisories',
+        'nav.devices': 'Registered Devices',
+        'nav.threats': 'Threat Reports',
+        'nav.scans': 'Scan Analytics',
+        'nav.sos': 'SOS Incidents',
+        'nav.grievances': 'Citizen Grievances',
+        'nav.audit': 'Audit Trail',
+        'nav.settings': 'Settings & APIs',
+        'page.dashboard': 'Dashboard',
+        'page.users': 'Users & Roles',
+        'page.news': 'Cyber News & Advisories',
+        'page.devices': 'Registered Devices',
+        'page.threats': 'Threat Reports',
+        'page.scans': 'Scan Analytics',
+        'page.sos': 'SOS Incidents',
+        'page.grievances': 'Citizen Grievances',
+        'page.audit': 'Audit Trail',
+        'page.settings': 'Settings & API Integrations',
+      },
+      hi: {
+        'topbar.lastSync': 'अंतिम सिंक',
+        'topbar.systemHealthy': 'सिस्टम स्वस्थ',
+        'auth.signin': 'साइन इन',
+        'auth.signout': 'साइन आउट',
+        'auth.username': 'उपयोगकर्ता नाम',
+        'auth.password': 'पासवर्ड',
+        'auth.role': 'भूमिका',
+        'auth.role.admin': 'प्रशासक',
+        'auth.role.govt': 'सरकारी प्राधिकारी',
+        'auth.subtitle': 'प्रशासनिक कंसोल',
+        'nav.dashboard': 'डैशबोर्ड',
+        'nav.users': 'उपयोगकर्ता और भूमिकाएँ',
+        'nav.news': 'साइबर समाचार और सलाह',
+        'nav.devices': 'पंजीकृत डिवाइस',
+        'nav.threats': 'खतरा रिपोर्ट',
+        'nav.scans': 'स्कैन विश्लेषण',
+        'nav.sos': 'SOS घटनाएँ',
+        'nav.grievances': 'नागरिक शिकायतें',
+        'nav.audit': 'ऑडिट ट्रेल',
+        'nav.settings': 'सेटिंग्स और API',
+        'page.dashboard': 'डैशबोर्ड',
+        'page.users': 'उपयोगकर्ता और भूमिकाएँ',
+        'page.news': 'साइबर समाचार और सलाह',
+        'page.devices': 'पंजीकृत डिवाइस',
+        'page.threats': 'खतरा रिपोर्ट',
+        'page.scans': 'स्कैन विश्लेषण',
+        'page.sos': 'SOS घटनाएँ',
+        'page.grievances': 'नागरिक शिकायतें',
+        'page.audit': 'ऑडिट ट्रेल',
+        'page.settings': 'सेटिंग्स और API एकीकरण',
+      },
+      mr: {
+        'topbar.lastSync': 'शेवटचे सिंक',
+        'topbar.systemHealthy': 'सिस्टम निरोगी',
+        'auth.signin': 'साइन इन',
+        'auth.signout': 'साइन आउट',
+        'auth.username': 'वापरकर्तानाव',
+        'auth.password': 'पासवर्ड',
+        'auth.role': 'भूमिका',
+        'auth.role.admin': 'प्रशासक',
+        'auth.role.govt': 'सरकारी प्राधिकरण',
+        'auth.subtitle': 'प्रशासकीय कन्सोल',
+        'nav.dashboard': 'डॅशबोर्ड',
+        'nav.users': 'वापरकर्ते आणि भूमिका',
+        'nav.news': 'सायबर बातम्या व सल्ले',
+        'nav.devices': 'नोंदणीकृत डिव्हाइसेस',
+        'nav.threats': 'धोका अहवाल',
+        'nav.scans': 'स्कॅन विश्लेषण',
+        'nav.sos': 'SOS घटना',
+        'nav.grievances': 'नागरिक तक्रारी',
+        'nav.audit': 'ऑडिट ट्रेल',
+        'nav.settings': 'सेटिंग्ज व API',
+        'page.dashboard': 'डॅशबोर्ड',
+        'page.users': 'वापरकर्ते आणि भूमिका',
+        'page.news': 'सायबर बातम्या व सल्ले',
+        'page.devices': 'नोंदणीकृत डिव्हाइसेस',
+        'page.threats': 'धोका अहवाल',
+        'page.scans': 'स्कॅन विश्लेषण',
+        'page.sos': 'SOS घटना',
+        'page.grievances': 'नागरिक तक्रारी',
+        'page.audit': 'ऑडिट ट्रेल',
+        'page.settings': 'सेटिंग्ज व API एकीकरण',
+      },
+    };
+    let LANG = localStorage.getItem('mcs_admin_lang') || 'en';
+    function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key; }
+    function setLang(code) {
+      if (!I18N[code]) return;
+      LANG = code;
+      localStorage.setItem('mcs_admin_lang', code);
+      document.documentElement.lang = code;
+      applyI18n();
+      // re-render current page if logged in
+      const active = document.querySelector('.nav-link.active');
+      if (active && !document.getElementById('app').classList.contains('hidden')) nav(active.dataset.route);
+    }
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+    }
+
+    const DATA = {
+      users: [
+        { id: 1, name: 'Naveen Gawande', email: 'naveen@cybersafe.local', role: 'Administrator', status: 'Active', lastLogin: '2026-05-15 14:22' },
+        { id: 2, name: 'Priya Sharma', email: 'priya@cybersafe.local', role: 'Govt Authority', status: 'Active', lastLogin: '2026-05-15 09:11' },
+        { id: 3, name: 'Rohan Deshmukh', email: 'rohan@cybersafe.local', role: 'Content Editor', status: 'Active', lastLogin: '2026-05-14 18:42' },
+        { id: 4, name: 'Anjali Patil', email: 'anjali@cybersafe.local', role: 'Auditor', status: 'Disabled', lastLogin: '2026-04-30 10:00' },
+      ],
+      news: [],
+      feedNews: [],
+      feedFetchedAt: '',
+      feedSources: [],
+      threats: [],
+      incidents: [],
+      scans: {
+        qr: [0, 0, 0, 0, 0, 0, 0],
+        url: [0, 0, 0, 0, 0, 0, 0],
+        wifi: [0, 0, 0, 0, 0, 0, 0],
+        breach: [0, 0, 0, 0, 0, 0, 0],
+        ip: [0, 0, 0, 0, 0, 0, 0],
+        labels: ['', '', '', '', '', '', ''],
+        total: 0,
+        threats_found: 0,
+        avg_latency_ms: 0,
+        by_verdict: {},
+      },
+      grievances: [],
+      audit: [],
+      devices: [],
+      apis: [],
+      apisCheckedAt: '',
+    };
+
+    // ============ BACKEND ============
+    const API_BASE = window.location.origin; // same host the admin console is served from
+    async function refreshFromBackend() {
+      try {
+        const [d, t, s, n, f, a, sc, g] = await Promise.all([
+          fetch(API_BASE + '/api/devices').then(r => r.ok ? r.json() : []),
+          fetch(API_BASE + '/api/threats').then(r => r.ok ? r.json() : []),
+          fetch(API_BASE + '/api/sos').then(r => r.ok ? r.json() : []),
+          fetch(API_BASE + '/api/news').then(r => r.ok ? r.json() : []),
+          fetch(API_BASE + '/api/news/feed').then(r => r.ok ? r.json() : { news: [], news_fetched_at: '', news_sources: [] }),
+          fetch(API_BASE + '/api/audit?limit=500').then(r => r.ok ? r.json() : []),
+          fetch(API_BASE + '/api/scans/summary?days=7').then(r => r.ok ? r.json() : null),
+          fetch(API_BASE + '/api/grievances').then(r => r.ok ? r.json() : []),
+        ]);
+        DATA.grievances = Array.isArray(g) ? g : [];
+        DATA.devices = Array.isArray(d) ? d : [];
+        DATA.threats = Array.isArray(t) ? t : [];
+        DATA.incidents = Array.isArray(s) ? s : [];
+        DATA.news = Array.isArray(n) ? n : [];
+        DATA.audit = Array.isArray(a) ? a : [];
+        if (sc && Array.isArray(sc.labels)) {
+          DATA.scans = {
+            qr: sc.qr || [], url: sc.url || [], wifi: sc.wifi || [],
+            breach: sc.breach || [], ip: sc.ip || [],
+            call_forward: sc.call_forward || [], sms: sc.sms || [],
+            accessibility: sc.accessibility || [],
+            labels: sc.labels || [],
+            total: sc.total || 0,
+            threats_found: sc.threats_found || 0,
+            avg_latency_ms: sc.avg_latency_ms || 0,
+            by_verdict: sc.by_verdict || {},
+          };
+        }
+        DATA.feedNews = Array.isArray(f.news) ? f.news : [];
+        DATA.feedFetchedAt = f.news_fetched_at || '';
+        DATA.feedSources = Array.isArray(f.news_sources) ? f.news_sources : [];
+        try {
+          const ix = await fetch(API_BASE + '/api/integrations').then(r => r.ok ? r.json() : null);
+          if (ix) {
+            DATA.apis = ix.integrations || [];
+            DATA.apisCheckedAt = ix.checked_at || '';
+            // Always append the local runtime services so the admin sees them too
+            DATA.apis.push({ name: 'Talsec freeRASP', purpose: 'Runtime threat callbacks (on-device)', status: 'Active' });
+          }
+        } catch (e) { /* ignore */ }
+        const active = document.querySelector('.nav-link.active');
+        if (active && !document.getElementById('app').classList.contains('hidden')) {
+          nav(active.dataset.route); // re-render current page
+        }
+      } catch (e) {
+        console.warn('Backend fetch failed', e);
+      }
+    }
+
+    // ============ AUTH ============
+    function doLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const r = document.getElementById('role').value;
+      if (u === 'admin' && p === 'admin') {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('userName').textContent = u.charAt(0).toUpperCase() + u.slice(1);
+        document.getElementById('userRole').textContent = r === 'admin' ? 'Administrator' : 'Govt Authority';
+        document.getElementById('userInitial').textContent = u.charAt(0).toUpperCase();
+        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+        refreshFromBackend().then(() => nav('dashboard'));
+        auditPush({ ts: new Date().toISOString().replace('T', ' ').slice(0, 19), user: u, action: 'LOGIN_SUCCESS', ip: '127.0.0.1', detail: 'Session start' });
+      } else {
+        alert('Invalid credentials. Use admin / admin');
+      }
+    }
+    function logout() {
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    // ============ NAV ============
+    function nav(route) {
+      document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.route === route));
+      document.getElementById('pageTitle').textContent = t('page.' + route);
+      const c = document.getElementById('content');
+      ({
+        dashboard: renderDashboard, users: renderUsers, news: renderNews, devices: renderDevices,
+        threats: renderThreats, scans: renderScans, sos: renderSos, grievances: renderGrievances,
+        audit: renderAudit, settings: renderSettings
+      })[route](c);
+    }
+
+    // ============ RENDERERS ============
+    function statCard(label, value, sub, color) {
+      return `<div class="bg-white rounded-xl p-5 border border-slate-200">
+    <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">${label}</div>
+    <div class="text-3xl font-bold text-slate-900 mt-1">${value}</div>
+    <div class="text-xs ${color} mt-1">${sub}</div>
+  </div>`;
+    }
+
+    function renderDashboard(c) {
+      const sumArr = a => (a || []).reduce((x, y) => x + y, 0);
+      const scanTotal = sumArr(DATA.scans.url) + sumArr(DATA.scans.qr) + sumArr(DATA.scans.wifi) + sumArr(DATA.scans.breach);
+      const scanSub = `${sumArr(DATA.scans.url)} URL · ${sumArr(DATA.scans.qr)} QR · ${sumArr(DATA.scans.wifi)} Wi-Fi · ${sumArr(DATA.scans.breach)} breach`;
+      c.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      ${statCard('Registered Devices', DATA.devices.length.toLocaleString(), `${DATA.devices.filter(d => d.status === 'Active').length} active · ${DATA.devices.filter(d => d.status === 'Flagged').length} flagged`, 'text-green-600')}
+      ${statCard('Threats Reported', DATA.threats.length.toLocaleString(), `${DATA.threats.filter(t => t.severity === 'critical').length} critical · ${DATA.threats.filter(t => t.severity === 'high').length} high`, 'text-red-600')}
+      ${statCard('URL / QR Scans (7d)', scanTotal.toLocaleString(), scanSub, 'text-blue-600')}
+      ${statCard('Open SOS Incidents', DATA.incidents.filter(i => i.status === 'Open').length, `${DATA.incidents.length} total · ${DATA.incidents.filter(i => i.status === 'Resolved').length} resolved`, 'text-red-600')}
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="col-span-2 bg-white rounded-xl p-5 border border-slate-200"><h3 class="font-semibold mb-3">Scan Trend (7d)</h3><canvas id="scanChart"></canvas></div>
+      <div class="bg-white rounded-xl p-5 border border-slate-200"><h3 class="font-semibold mb-3">Severity</h3><canvas id="severityChart"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b"><h3 class="font-semibold">Recent activity</h3></div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr><th class="px-5 py-3 text-left">When</th><th class="text-left">Actor</th><th class="text-left">Action</th><th class="text-left">Detail</th></tr>
+        </thead>
+        <tbody>${(DATA.audit || []).slice(0, 8).map(a => {
+        const action = (a.action || '').toUpperCase();
+        const dot = action.includes('THREAT') || action.includes('FAIL') || action.includes('DELETE')
+          ? 'crit'
+          : action.includes('WARN') || action.includes('FLAG')
+            ? 'warn'
+            : 'ok';
+        return `<tr class="border-t hover:bg-slate-50">
+          <td class="px-5 py-3 text-xs font-mono text-slate-500"><span class="status-dot ${dot}"></span>${escHtml(a.ts || '')}</td>
+          <td class="text-slate-700">${escHtml(a.user || a.actor || '')}</td>
+          <td><span class="badge badge-low">${escHtml(a.action || '')}</span></td>
+          <td class="text-slate-600 text-xs">${escHtml(a.detail || '')}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="4" class="px-5 py-8 text-center text-slate-400">No activity yet.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+      // Neon-cyber palette (preserved per-kind series for data fidelity;
+      // teal leads the trend with the brightest weight).
+      new Chart(document.getElementById('scanChart'), {
+        type: 'line',
+        data: {
+          labels: DATA.scans.labels, datasets: [
+            { label: 'URL',           data: DATA.scans.url,           borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.15)',   borderWidth: 2.5, tension: 0.45, fill: true, pointRadius: 0 },
+            { label: 'QR',            data: DATA.scans.qr,            borderColor: '#34D399', backgroundColor: 'rgba(52,211,153,0.10)',  borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+            { label: 'Wi-Fi',         data: DATA.scans.wifi,          borderColor: '#FBBF24', backgroundColor: 'rgba(251,191,36,0.10)',  borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+            { label: 'Breach',        data: DATA.scans.breach,        borderColor: '#F87171', backgroundColor: 'rgba(248,113,113,0.10)', borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+            { label: 'Call-fwd',      data: DATA.scans.call_forward,  borderColor: '#EC4899', backgroundColor: 'rgba(236,72,153,0.10)',  borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+            { label: 'SMS',           data: DATA.scans.sms,           borderColor: '#A78BFA', backgroundColor: 'rgba(167,139,250,0.10)', borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+            { label: 'Accessibility', data: DATA.scans.accessibility, borderColor: '#C4B5FD', backgroundColor: 'rgba(196,181,253,0.08)', borderWidth: 2,   tension: 0.45, pointRadius: 0 },
+          ]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+      });
+      const sev = { low: 0, medium: 0, high: 0, critical: 0 };
+      DATA.threats.forEach(t => { if (sev[t.severity] !== undefined) sev[t.severity]++; });
+      new Chart(document.getElementById('severityChart'), {
+        type: 'doughnut',
+        data: { labels: ['Low', 'Medium', 'High', 'Critical'], datasets: [{ data: [sev.low, sev.medium, sev.high, sev.critical], backgroundColor: ['#06B6D4', '#FBBF24', '#FB923C', '#F87171'], borderColor: 'rgba(255,255,255,0.04)', borderWidth: 1, cutout: '62%' }] },
+        options: { plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } } }
+      });
+    }
+
+    function renderUsers(c) {
+      c.innerHTML = `
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Users (${DATA.users.length})</h3>
+        <button onclick="openUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm">+ Add User</button>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr><th class="px-5 py-3 text-left">Name</th><th class="text-left">Email</th><th class="text-left">Role</th><th class="text-left">Status</th><th class="text-left">Last Login</th><th></th></tr>
+        </thead>
+        <tbody>${DATA.users.map(u => `<tr class="border-t hover:bg-slate-50">
+          <td class="px-5 py-3 font-medium">${u.name}</td>
+          <td class="text-slate-600">${u.email}</td>
+          <td>${u.role}</td>
+          <td>${u.status === 'Active' ? '<span class="badge badge-ok">Active</span>' : '<span class="badge badge-crit">Disabled</span>'}</td>
+          <td class="text-slate-500">${u.lastLogin}</td>
+          <td><button class="text-blue-600 text-xs hover:underline">Edit</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  `;
+    }
+    function openUserModal() {
+      showModal(`<div class="bg-white rounded-2xl p-6 w-full max-w-md">
+    <h3 class="text-lg font-bold mb-4">Add User</h3>
+    <form onsubmit="saveUser(event)" class="space-y-3">
+      <input required placeholder="Full name" class="w-full border rounded-lg px-3 py-2" />
+      <input required type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" />
+      <select class="w-full border rounded-lg px-3 py-2">
+        <option>Administrator</option><option>Govt Authority</option><option>Content Editor</option><option>Auditor</option>
+      </select>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModal()" class="flex-1 border rounded-lg py-2">Cancel</button>
+        <button class="flex-1 bg-blue-600 text-white rounded-lg py-2">Save</button>
+      </div>
+    </form></div>`);
+    }
+    function saveUser(e) { e.preventDefault(); closeModal(); alert('User created (demo).'); auditPush({ ts: now(), user: 'admin', action: 'USER_CREATE', ip: '127.0.0.1', detail: 'Created new user' }); }
+
+    function renderNews(c) {
+      c.innerHTML = `
+    <div class="mb-3 flex items-center gap-2 text-xs text-slate-500">
+      <span class="badge badge-crit">HIGH PRIORITY</span>
+      <span>CyberSafe advisories — citizens see these pinned at the top of their news feed.</span>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Advisories (${DATA.news.length})</h3>
+        <button onclick="openNewsModal()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">+ New Advisory</button>
+      </div>
+      <div class="divide-y">${DATA.news.length === 0
+          ? '<div class="px-5 py-8 text-center text-slate-400">No advisories yet — create one with the button above.</div>'
+          : DATA.news.map(n => `
+        <div class="px-5 py-4 hover:bg-slate-50">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <h4 class="font-semibold text-slate-900">${escHtml(n.title)}</h4>
+                ${n.status === 'Published' ? '<span class="badge badge-ok">Published</span>' :
+              n.status === 'Draft' ? '<span class="badge badge-med">Draft</span>' : '<span class="badge badge-high">Pending Approval</span>'}
+                <span class="badge badge-low">${escHtml(n.category || '')}</span>
+              </div>
+              <p class="text-sm text-slate-600 mt-1">${escHtml(n.summary || '')}</p>
+              <div class="text-xs text-slate-400 mt-2">${escHtml(n.updated || n.created || '')} · ${escHtml(n.lang || '')}</div>
+            </div>
+            <div class="flex gap-2 flex-shrink-0 ml-3">
+              <button onclick="openNewsModal(${n.id})" class="text-blue-600 text-xs hover:underline">Edit</button>
+              ${n.status !== 'Published' ? `<button onclick="publishNews(${n.id})" class="text-green-600 text-xs hover:underline">Publish</button>` : ''}
+              <button onclick="deleteNews(${n.id})" class="text-red-600 text-xs hover:underline">Delete</button>
+            </div>
+          </div>
+        </div>`).join('')
+        }</div>
+    </div>
+    ${renderLiveNewsSection()}`;
+    }
+    function escHtml(s) { return String(s ?? '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+
+    function renderLiveNewsSection() {
+      const list = DATA.feedNews;
+      const srcBadges = DATA.feedSources.map(s => `<span class="badge badge-low">${escHtml(s)}</span>`).join(' ');
+      return `
+    <div class="mt-8">
+      <div class="flex items-center gap-2 mb-2">
+        <h3 class="font-semibold text-slate-900">Latest cyber news (live feed)</h3>
+        <span class="text-xs text-slate-500">${list.length} stories</span>
+        <span class="text-xs text-slate-400 ml-auto">Updated: ${escHtml(DATA.feedFetchedAt || '—')}</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">Sources: ${srcBadges || '—'} · refreshed every 6 hours</div>
+      <div class="bg-white rounded-xl border border-slate-200 divide-y">
+        ${list.length === 0
+          ? '<div class="px-5 py-8 text-center text-slate-400">No live news loaded.</div>'
+          : list.slice(0, 30).map(n => `
+              <a href="${escHtml(n.link)}" target="_blank" class="block px-5 py-3 hover:bg-slate-50">
+                <div class="flex items-start gap-3">
+                  <span class="badge badge-low flex-shrink-0">${escHtml(n.source)}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm text-slate-900">${escHtml(n.title)}</div>
+                    <div class="text-xs text-slate-500 mt-0.5 truncate">${escHtml(n.summary || '')}</div>
+                  </div>
+                  <span class="text-xs text-slate-400 flex-shrink-0 font-mono">${escHtml(n.published || '')}</span>
+                </div>
+              </a>`).join('')}
+      </div>
+    </div>`;
+    }
+
+    function openNewsModal(id) {
+      const existing = id ? DATA.news.find(n => n.id === id) : null;
+      const e = existing || { title: '', summary: '', body: '', category: 'Advisory', lang: 'EN/HI/MR', status: 'Draft' };
+      showModal(`<div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <h3 class="text-lg font-bold mb-4">${existing ? 'Edit advisory' : 'New advisory'}</h3>
+    <form onsubmit="saveNews(event, ${existing ? existing.id : 'null'})" class="space-y-3">
+      <input name="title" required placeholder="Title" value="${escHtml(e.title)}" class="w-full border rounded-lg px-3 py-2" />
+      <textarea name="summary" required placeholder="Summary (visible in app cards)" rows="3" class="w-full border rounded-lg px-3 py-2">${escHtml(e.summary)}</textarea>
+      <textarea name="body" placeholder="Full content (shown when citizen taps the advisory)" rows="6" class="w-full border rounded-lg px-3 py-2">${escHtml(e.body)}</textarea>
+      <div class="grid grid-cols-3 gap-3">
+        <input name="category" placeholder="Category" value="${escHtml(e.category)}" class="border rounded-lg px-3 py-2" />
+        <select name="lang" class="border rounded-lg px-3 py-2">
+          ${['EN/HI/MR', 'EN', 'HI', 'MR', 'EN/HI', 'EN/MR'].map(l => `<option ${e.lang === l ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <select name="status" class="border rounded-lg px-3 py-2">
+          ${['Draft', 'Pending Approval', 'Published'].map(s => `<option ${e.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModal()" class="flex-1 border rounded-lg py-2">Cancel</button>
+        <button class="flex-1 bg-blue-600 text-white rounded-lg py-2">${existing ? 'Save changes' : 'Save'}</button>
+      </div>
+    </form></div>`);
+    }
+    async function saveNews(ev, id) {
+      ev.preventDefault();
+      const f = ev.target;
+      const payload = {
+        title: f.title.value, summary: f.summary.value, body: f.body.value,
+        category: f.category.value, lang: f.lang.value, status: f.status.value,
+      };
+      try {
+        const url = id ? `${API_BASE}/api/news/${id}` : `${API_BASE}/api/news`;
+        const method = id ? 'PATCH' : 'POST';
+        const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        closeModal();
+        nav('news');
+        auditPush({ ts: now(), user: 'admin', action: id ? 'NEWS_UPDATE' : 'NEWS_CREATE', ip: '127.0.0.1', detail: payload.title });
+      } catch (e) { alert('Save failed: ' + e.message); }
+    }
+    async function publishNews(id) {
+      try {
+        const r = await fetch(`${API_BASE}/api/news/${id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Published' }),
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        nav('news');
+        auditPush({ ts: now(), user: 'admin', action: 'NEWS_PUBLISH', ip: '127.0.0.1', detail: `Published #${id}` });
+      } catch (e) { alert('Publish failed: ' + e.message); }
+    }
+    async function deleteNews(id) {
+      if (!confirm('Delete this advisory?')) return;
+      try {
+        const r = await fetch(`${API_BASE}/api/news/${id}`, { method: 'DELETE' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        nav('news');
+        auditPush({ ts: now(), user: 'admin', action: 'NEWS_DELETE', ip: '127.0.0.1', detail: `Deleted #${id}` });
+      } catch (e) { alert('Delete failed: ' + e.message); }
+    }
+
+    function renderDevices(c) {
+      const total = DATA.devices.length;
+      const active = DATA.devices.filter(d => d.status === 'Active').length;
+      const flagged = DATA.devices.filter(d => d.status === 'Flagged').length;
+      const inactive = DATA.devices.filter(d => d.status === 'Inactive').length;
+      const android = DATA.devices.filter(d => d.os.startsWith('Android')).length;
+      const ios = DATA.devices.filter(d => d.os.startsWith('iOS')).length;
+      c.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      ${statCard('Total Registered', total, `${android} Android · ${ios} iOS`, 'text-blue-600')}
+      ${statCard('Active', active, 'Heartbeat in last 24h', 'text-green-600')}
+      ${statCard('Flagged', flagged, 'Critical RASP threats', 'text-red-600')}
+      ${statCard('Inactive', inactive, 'No heartbeat >5 days', 'text-amber-600')}
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Devices (${total})</h3>
+        <div class="flex gap-2 text-xs">
+          <input id="devFilter" oninput="filterDevices(this.value)" placeholder="Search device/citizen/model…" class="border rounded px-2 py-1 w-64" />
+          <select id="devStatusFilter" onchange="filterDevices(document.getElementById('devFilter').value)" class="border rounded px-2 py-1">
+            <option value="">All statuses</option><option>Active</option><option>Flagged</option><option>Inactive</option>
+          </select>
+          <button onclick="wipeAllDevices()" class="border rounded px-2 py-1 text-red-600 hover:bg-red-50">Wipe all</button>
+        </div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">Device ID</th>
+            <th class="text-left">Citizen</th>
+            <th class="text-left">Model</th>
+            <th class="text-left">OS</th>
+            <th class="text-left">App Ver</th>
+            <th class="text-left">RASP Status</th>
+            <th class="text-left">Registered</th>
+            <th class="text-left">Last Seen</th>
+            <th class="text-left">Location</th>
+            <th class="text-left">Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="deviceRows">${devicesRowsHtml(DATA.devices)}</tbody>
+      </table>
+    </div>
+  `;
+    }
+    function devicesRowsHtml(list) {
+      if (!list.length) return `<tr><td colspan="11" class="px-5 py-6 text-center text-slate-400">No devices match.</td></tr>`;
+      return list.map(d => {
+        const raspCls = { clean: 'badge-ok', low: 'badge-low', medium: 'badge-med', high: 'badge-high', critical: 'badge-crit' }[d.rasp];
+        const raspLbl = { clean: 'CLEAN', low: 'LOW', medium: 'MED', high: 'HIGH', critical: 'CRIT' }[d.rasp];
+        const statusCls = d.status === 'Active' ? 'badge-ok' : d.status === 'Flagged' ? 'badge-crit' : 'badge-med';
+        return `<tr class="border-t hover:bg-slate-50">
+      <td class="px-5 py-3 font-mono text-xs text-blue-700">${d.id}</td>
+      <td class="font-mono text-xs">${d.citizen}</td>
+      <td class="font-medium">${d.model}</td>
+      <td class="text-slate-600">${d.os}</td>
+      <td class="text-slate-500 text-xs font-mono">${d.appVer}</td>
+      <td><span class="badge ${raspCls}">${raspLbl}</span></td>
+      <td class="text-slate-500 text-xs">${d.registered}</td>
+      <td class="text-slate-500 text-xs">${d.lastSeen}</td>
+      <td class="text-slate-600">${d.location}</td>
+      <td><span class="badge ${statusCls}">${d.status}</span></td>
+      <td class="whitespace-nowrap">
+        <button onclick="openDeviceModal('${d.id}')" class="text-blue-600 text-xs hover:underline mr-2">View</button>
+        <button onclick="deleteDevice('${d.id}')" class="text-red-600 text-xs hover:underline">Delete</button>
+      </td>
+    </tr>`;
+      }).join('');
+    }
+    async function deleteDevice(id) {
+      if (!confirm(`Delete device ${id}? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/api/devices/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        auditPush({ ts: now(), user: 'admin', action: 'DEVICE_DELETE', ip: '127.0.0.1', detail: `Deleted ${id}` });
+      } catch (e) { alert('Delete failed: ' + e.message); }
+    }
+    async function wipeAllDevices() {
+      if (!confirm(`Permanently delete ALL ${DATA.devices.length} registered devices and ALL threat events? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/api/wipe`, { method: 'POST' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        auditPush({ ts: now(), user: 'admin', action: 'WIPE_ALL', ip: '127.0.0.1', detail: 'All devices and threats cleared' });
+      } catch (e) { alert('Wipe failed: ' + e.message); }
+    }
+    function filterDevices(q) {
+      q = (q || '').toLowerCase();
+      const status = document.getElementById('devStatusFilter').value;
+      const filtered = DATA.devices.filter(d => {
+        const matchQ = !q || d.id.toLowerCase().includes(q) || d.citizen.toLowerCase().includes(q) || d.model.toLowerCase().includes(q) || d.location.toLowerCase().includes(q);
+        const matchS = !status || d.status === status;
+        return matchQ && matchS;
+      });
+      document.getElementById('deviceRows').innerHTML = devicesRowsHtml(filtered);
+    }
+    function openDeviceModal(id) {
+      const d = DATA.devices.find(x => x.id === id);
+      if (!d) return;
+      const threats = DATA.threats.filter(t => t.user === d.citizen);
+      const raspCls = { clean: 'badge-ok', low: 'badge-low', medium: 'badge-med', high: 'badge-high', critical: 'badge-crit' }[d.rasp];
+      showModal(`<div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h3 class="text-lg font-bold">${d.model}</h3>
+        <p class="text-xs font-mono text-blue-700">${d.id}</p>
+      </div>
+      <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-5 text-sm">
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">Citizen</div><div class="font-mono text-sm">${d.citizen}</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">OS / App version</div><div>${d.os} · v${d.appVer}</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">Registered</div><div>${d.registered}</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">Last seen</div><div>${d.lastSeen}</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">Location</div><div>${d.location}</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3">
+        <div class="text-xs text-slate-500">RASP status</div><div><span class="badge ${raspCls}">${d.rasp.toUpperCase()}</span></div>
+      </div>
+    </div>
+    <h4 class="font-semibold text-sm mb-2">Threat history (${threats.length})</h4>
+    <div class="space-y-2 mb-4">
+      ${threats.length ? threats.map(t => `<div class="flex justify-between items-center p-2 bg-slate-50 rounded text-sm">
+        <div>${t.type}<div class="text-xs text-slate-500">${t.timestamp}</div></div>
+        ${sevBadge(t.severity)}
+      </div>`).join('') : '<div class="text-sm text-slate-500">No threats logged for this device.</div>'}
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 border rounded-lg py-2 text-sm">Close</button>
+      <button onclick="alert('Push notification sent (demo).');" class="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">Send advisory</button>
+      <button onclick="alert('Device flagged for review (demo).');" class="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm">Flag &amp; quarantine</button>
+    </div>
+  </div>`);
+    }
+
+    const THREATS_PAGE_SIZE = 10;
+    let threatsPage = 1;
+    let threatsSevFilter = '';
+    function threatsFilteredList() {
+      return threatsSevFilter
+        ? DATA.threats.filter(t => (t.severity || '').toLowerCase() === threatsSevFilter.toLowerCase())
+        : DATA.threats.slice();
+    }
+    function threatsRowsHtml(list) {
+      if (!list.length) return '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">No threats match the current filter.</td></tr>';
+      return list.map(t => `<tr class="border-t hover:bg-slate-50">
+        <td class="px-5 py-3 font-mono text-xs">${escHtml(t.user)}</td>
+        <td class="font-medium">${escHtml(t.type)}</td>
+        <td>${sevBadge(t.severity)}</td>
+        <td class="text-slate-600">${escHtml(t.device)}</td>
+        <td class="text-slate-500 text-xs font-mono">${escHtml(t.timestamp)}</td>
+        <td>${t.resolved ? '<span class="badge badge-ok">Resolved</span>' : '<span class="badge badge-crit">Open</span>'}</td>
+      </tr>`).join('');
+    }
+    function threatsPagerHtml(filtered) {
+      const total = filtered.length;
+      const pages = Math.max(1, Math.ceil(total / THREATS_PAGE_SIZE));
+      const start = total ? (threatsPage - 1) * THREATS_PAGE_SIZE + 1 : 0;
+      const end = Math.min(total, threatsPage * THREATS_PAGE_SIZE);
+      return `
+        <span>Showing ${start}–${end} of ${total}</span>
+        <div class="flex items-center gap-2">
+          <button onclick="threatsGoto(1)" ${threatsPage <= 1 ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">«</button>
+          <button onclick="threatsGoto(${threatsPage - 1})" ${threatsPage <= 1 ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">‹ Prev</button>
+          <span class="px-2">Page ${threatsPage} / ${pages}</span>
+          <button onclick="threatsGoto(${threatsPage + 1})" ${threatsPage >= pages ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">Next ›</button>
+          <button onclick="threatsGoto(${pages})" ${threatsPage >= pages ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">»</button>
+        </div>`;
+    }
+    function threatsGoto(p) {
+      const filtered = threatsFilteredList();
+      const pages = Math.max(1, Math.ceil(filtered.length / THREATS_PAGE_SIZE));
+      threatsPage = Math.min(Math.max(1, p), pages);
+      const start = (threatsPage - 1) * THREATS_PAGE_SIZE;
+      const slice = filtered.slice(start, start + THREATS_PAGE_SIZE);
+      const rows = document.getElementById('threatsRows');
+      const pager = document.getElementById('threatsPager');
+      if (rows) rows.innerHTML = threatsRowsHtml(slice);
+      if (pager) pager.innerHTML = threatsPagerHtml(filtered);
+    }
+    function threatsSetSeverity(sev) {
+      threatsSevFilter = sev || '';
+      threatsPage = 1;
+      threatsGoto(1);
+    }
+    function exportThreatsCsv() {
+      const rows = threatsFilteredList();
+      const esc = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
+      const csv = ['user,type,severity,device,timestamp,status',
+        ...rows.map(t => [t.user, t.type, t.severity, t.device, t.timestamp, t.resolved ? 'Resolved' : 'Open'].map(esc).join(','))
+      ].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `cybersafe_threats_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    function renderThreats(c) {
+      threatsPage = 1;
+      threatsSevFilter = '';
+      const filtered = threatsFilteredList();
+      const slice = filtered.slice(0, THREATS_PAGE_SIZE);
+      c.innerHTML = `
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Threat reports from app RASP (${DATA.threats.length})</h3>
+        <div class="flex gap-2 text-xs">
+          <select onchange="threatsSetSeverity(this.value)" class="border rounded px-2 py-1">
+            <option value="">All severities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button onclick="exportThreatsCsv()" class="border rounded px-2 py-1 hover:bg-slate-50">Export CSV</button>
+        </div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr><th class="px-5 py-3 text-left">User</th><th class="text-left">Threat Type</th><th class="text-left">Severity</th><th class="text-left">Device</th><th class="text-left">Timestamp</th><th class="text-left">Status</th></tr>
+        </thead>
+        <tbody id="threatsRows">${DATA.threats.length === 0
+          ? '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">No threats reported yet — install the app and trigger a RASP detection (e.g. enable Developer Options).</td></tr>'
+          : threatsRowsHtml(slice)
+        }</tbody>
+      </table>
+      <div id="threatsPager" class="px-5 py-3 border-t flex items-center justify-between text-xs text-slate-600">${threatsPagerHtml(filtered)}</div>
+    </div>`;
+    }
+    function sevBadge(s) {
+      const m = { low: 'badge-low LOW', medium: 'badge-med MED', high: 'badge-high HIGH', critical: 'badge-crit CRIT' };
+      const [cls, lbl] = m[s].split(' ');
+      return `<span class="badge ${cls}">${lbl}</span>`;
+    }
+
+    function renderScans(c) {
+      const s = DATA.scans;
+      const sumArr = a => (a || []).reduce((x, y) => x + y, 0);
+      const total = s.total || (sumArr(s.url) + sumArr(s.qr) + sumArr(s.wifi) + sumArr(s.breach) + sumArr(s.ip) + sumArr(s.call_forward) + sumArr(s.sms) + sumArr(s.accessibility));
+      const threats = s.threats_found || 0;
+      const pct = total ? ((threats / total) * 100).toFixed(1) : '0.0';
+      const cfTotal = sumArr(s.call_forward);
+      const smsTotal = sumArr(s.sms);
+      const a11yTotal = sumArr(s.accessibility);
+      const lead = (() => {
+        const kinds = [['URL', sumArr(s.url)], ['QR', sumArr(s.qr)], ['Wi-Fi', sumArr(s.wifi)], ['Breach', sumArr(s.breach)], ['IP', sumArr(s.ip)], ['Call-fwd', cfTotal], ['SMS', smsTotal], ['A11y', a11yTotal]];
+        kinds.sort((a, b) => b[1] - a[1]);
+        return kinds[0][1] ? `${kinds[0][0]} leads` : '—';
+      })();
+      const v = s.by_verdict || {};
+      const verdictLabels = ['Safe / Clean', 'Suspicious', 'Malicious', 'Breached', 'Unknown'];
+      const verdictData = [
+        (v.safe || 0) + (v.clean || 0),
+        v.suspicious || 0,
+        v.malicious || 0,
+        v.breached || 0,
+        v.unknown || 0,
+      ];
+      c.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      ${statCard('Total scans (7d)', total.toLocaleString(), lead, 'text-blue-600')}
+      ${statCard('Threats found', threats.toLocaleString(), `${pct}% of scans`, 'text-red-600')}
+      ${statCard('Avg latency', (s.avg_latency_ms || 0) + ' ms', 'SLA: <5 s', 'text-green-600')}
+      ${statCard('Wi-Fi scans', sumArr(s.wifi).toLocaleString(), `${sumArr(s.breach).toLocaleString()} breach lookups`, 'text-amber-600')}
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      ${statCard('Call-forwarding actions (7d)', cfTotal.toLocaleString(), 'OTP-hijack checks & disables via *#21# / ##002#', 'text-pink-700')}
+      ${statCard('SMS inspected (7d)', smsTotal.toLocaleString(), 'Paste-only fraud scanner', 'text-blue-700')}
+      ${statCard('Accessibility audits (7d)', a11yTotal.toLocaleString(), 'Banking-malware overlay vector', 'text-purple-700')}
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl p-5 border border-slate-200"><h3 class="font-semibold mb-3">QR vs URL vs Wi-Fi (last 7d)</h3><canvas id="c1"></canvas></div>
+      <div class="bg-white rounded-xl p-5 border border-slate-200"><h3 class="font-semibold mb-3">Verdict mix (last 7d)</h3><canvas id="c2"></canvas></div>
+    </div>`;
+      new Chart(document.getElementById('c1'), {
+        type: 'bar', data: {
+          labels: s.labels || [], datasets: [
+            { label: 'URL', data: s.url || [], backgroundColor: '#2563EB' },
+            { label: 'QR', data: s.qr || [], backgroundColor: '#10B981' },
+            { label: 'Wi-Fi', data: s.wifi || [], backgroundColor: '#F59E0B' },
+            { label: 'Breach', data: s.breach || [], backgroundColor: '#EF4444' },
+            { label: 'Call-fwd', data: s.call_forward || [], backgroundColor: '#AD1457' },
+            { label: 'SMS', data: s.sms || [], backgroundColor: '#A78BFA' },
+            { label: 'A11y', data: s.accessibility || [], backgroundColor: '#7B1FA2' },
+          ]
+        }, options: { plugins: { legend: { position: 'bottom' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+      });
+      new Chart(document.getElementById('c2'), { type: 'pie', data: { labels: verdictLabels, datasets: [{ data: verdictData, backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#A855F7', '#64748B'] }] }, options: { plugins: { legend: { position: 'bottom' } } } });
+    }
+
+    function renderSos(c) {
+      const list = DATA.incidents;
+      const open = list.filter(i => i.status === 'Open').length;
+      const ack = list.filter(i => i.status === 'Acknowledged').length;
+      const resolved = list.filter(i => i.status === 'Resolved').length;
+      c.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      ${statCard('Total Incidents', list.length, 'All time', 'text-blue-600')}
+      ${statCard('Open', open, 'Need attention', 'text-red-600')}
+      ${statCard('Acknowledged', ack, 'In progress', 'text-amber-600')}
+      ${statCard('Resolved', resolved, 'Closed', 'text-green-600')}
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">SOS Incidents (${list.length})</h3>
+        <div class="flex gap-2 text-xs">
+          <select id="sosStatusFilter" onchange="renderSos(document.getElementById('content'))" class="border rounded px-2 py-1">
+            <option value="">All statuses</option><option>Open</option><option>Acknowledged</option><option>Resolved</option>
+          </select>
+        </div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">#</th>
+            <th class="text-left">When</th>
+            <th class="text-left">Citizen</th>
+            <th class="text-left">Device</th>
+            <th class="text-left">Location</th>
+            <th class="text-left">Accuracy</th>
+            <th class="text-left">Message</th>
+            <th class="text-left">Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sosRows">${sosRowsHtml(list)}</tbody>
+      </table>
+    </div>
+  `;
+    }
+    function sosRowsHtml(list) {
+      const f = (document.getElementById('sosStatusFilter') || {}).value || '';
+      const filtered = f ? list.filter(i => i.status === f) : list;
+      if (!filtered.length) return `<tr><td colspan="9" class="px-5 py-8 text-center text-slate-400">No SOS incidents${f ? ' in this status' : ''}.</td></tr>`;
+      return filtered.map(i => {
+        const statusCls = i.status === 'Open' ? 'badge-crit' : i.status === 'Acknowledged' ? 'badge-med' : 'badge-ok';
+        const mapsUrl = `https://maps.google.com/?q=${i.lat},${i.lng}`;
+        const msg = (i.message || '').replace(/</g, '&lt;');
+        return `<tr class="border-t hover:bg-slate-50">
+      <td class="px-5 py-3 font-mono text-xs">${i.id}</td>
+      <td class="text-slate-500 text-xs font-mono">${i.timestamp}</td>
+      <td class="font-mono text-xs">${i.citizen}</td>
+      <td class="text-slate-600">${i.model}<div class="text-xs text-slate-400">${i.deviceId}</div></td>
+      <td><a href="${mapsUrl}" target="_blank" class="text-blue-600 hover:underline font-mono text-xs">${i.lat.toFixed(5)}, ${i.lng.toFixed(5)} ↗</a></td>
+      <td class="text-slate-600 text-xs">±${(i.accuracy || 0).toFixed(0)} m</td>
+      <td class="text-slate-700 text-xs max-w-xs truncate" title="${msg}">${msg || '<span class="text-slate-300">—</span>'}</td>
+      <td><span class="badge ${statusCls}">${i.status}</span></td>
+      <td class="whitespace-nowrap">
+        ${i.status !== 'Acknowledged' && i.status !== 'Resolved' ? `<button onclick="updateSosStatus(${i.id},'Acknowledged')" class="text-amber-600 text-xs hover:underline mr-2">Ack</button>` : ''}
+        ${i.status !== 'Resolved' ? `<button onclick="updateSosStatus(${i.id},'Resolved')" class="text-green-700 text-xs hover:underline">Resolve</button>` : ''}
+      </td>
+    </tr>`;
+      }).join('');
+    }
+    async function updateSosStatus(id, status) {
+      try {
+        const r = await fetch(`${API_BASE}/api/sos/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await refreshFromBackend();
+        auditPush({ ts: now(), user: 'admin', action: 'SOS_' + status.toUpperCase(), ip: '127.0.0.1', detail: `Incident ${id} → ${status}` });
+      } catch (e) { alert('Update failed: ' + e.message); }
+    }
+
+    function renderGrievances(c) {
+      const list = DATA.grievances;
+      const open = list.filter(g => g.status === 'Open').length;
+      const inprog = list.filter(g => g.status === 'In Progress').length;
+      const esc = list.filter(g => g.status === 'Escalated').length;
+      const res = list.filter(g => g.status === 'Resolved').length;
+      c.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      ${statCard('Open', open, 'Need triage', 'text-blue-600')}
+      ${statCard('In Progress', inprog, 'Being worked on', 'text-amber-600')}
+      ${statCard('Escalated', esc, 'Routed to authority', 'text-red-600')}
+      ${statCard('Resolved', res, 'Closed', 'text-green-600')}
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Citizen support tickets (${list.length})</h3>
+        <div class="flex gap-2 text-xs">
+          <select id="grStatusFilter" onchange="renderGrievanceRows()" class="border rounded px-2 py-1">
+            <option value="">All statuses</option><option>Open</option><option>In Progress</option><option>Escalated</option><option>Resolved</option>
+          </select>
+          <select id="grCatFilter" onchange="renderGrievanceRows()" class="border rounded px-2 py-1">
+            <option value="">All categories</option>
+            ${['Financial Fraud', 'Phishing', 'Malware', 'Account Security', 'Identity Theft', 'Cyberbullying', 'Fake Apps', 'Other'].map(x => `<option>${x}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">Ticket</th>
+            <th class="text-left">Citizen</th>
+            <th class="text-left">Subject</th>
+            <th class="text-left">Category</th>
+            <th class="text-left">Status</th>
+            <th class="text-left">Updated</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="grievanceRows">${grievanceRowsHtml(list)}</tbody>
+      </table>
+    </div>`;
+    }
+    function grievanceRowsHtml(list) {
+      const sf = (document.getElementById('grStatusFilter') || {}).value || '';
+      const cf = (document.getElementById('grCatFilter') || {}).value || '';
+      const filtered = list.filter(g =>
+        (!sf || g.status === sf) && (!cf || g.category === cf));
+      if (!filtered.length) return `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">No tickets match the filter.</td></tr>`;
+      return filtered.map(g => {
+        const sc = g.status === 'Resolved' ? 'badge-ok' : g.status === 'Open' ? 'badge-low' : g.status === 'Escalated' ? 'badge-crit' : 'badge-med';
+        const updated = (g.updated || g.created || g.date || '').slice(0, 16);
+        return `<tr class="border-t hover:bg-slate-50">
+      <td class="px-5 py-3 font-mono text-xs">${escHtml(g.id)}</td>
+      <td>${escHtml(g.citizen || '')}</td>
+      <td class="text-slate-700">${escHtml(g.subject || '')}</td>
+      <td class="text-slate-600">${escHtml(g.category || '')}</td>
+      <td><span class="badge ${sc}">${escHtml(g.status || '')}</span></td>
+      <td class="text-slate-500 text-xs font-mono">${escHtml(updated)}</td>
+      <td class="pr-5"><button class="text-xs text-blue-600 hover:underline" onclick="openGrievance('${escHtml(g.id)}')">Open ↗</button></td>
+    </tr>`;
+      }).join('');
+    }
+    function renderGrievanceRows() {
+      const tb = document.getElementById('grievanceRows');
+      if (tb) tb.innerHTML = grievanceRowsHtml(DATA.grievances);
+    }
+    function openGrievance(id) {
+      const g = DATA.grievances.find(x => x.id === id);
+      if (!g) return;
+      const updated = (g.updated || g.created || '').slice(0, 16);
+      showModal(`
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6">
+      <div class="flex justify-between items-start mb-3">
+        <div>
+          <div class="text-xs font-mono text-slate-500">${escHtml(g.id)}</div>
+          <h3 class="font-bold text-lg">${escHtml(g.subject)}</h3>
+          <div class="text-xs text-slate-500 mt-1">${escHtml(g.category)} · ${escHtml(g.citizen)} · ${escHtml(updated)}</div>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">×</button>
+      </div>
+      <div class="text-sm bg-slate-50 rounded p-3 whitespace-pre-wrap mb-3">${escHtml(g.description || '(no description)')}</div>
+      ${g.contact ? `<div class="text-xs text-slate-600 mb-2">Contact: <span class="font-mono">${escHtml(g.contact)}</span></div>` : ''}
+      ${g.deviceId ? `<div class="text-xs text-slate-600 mb-3">From device: <span class="font-mono">${escHtml(g.deviceId)}</span> · ${escHtml(g.model || '')} · ${escHtml(g.os || '')}</div>` : ''}
+      <label class="text-xs font-medium block mb-1">Admin note (visible to citizen)</label>
+      <textarea id="grNote" class="w-full border rounded px-2 py-1 text-sm mb-3" rows="3">${escHtml(g.adminNote || '')}</textarea>
+      <div class="flex gap-2 justify-end items-center">
+        <select id="grNewStatus" class="border rounded px-2 py-1 text-sm">
+          ${['Open', 'In Progress', 'Escalated', 'Resolved'].map(s => `<option ${s === g.status ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <button onclick="closeModal()" class="border rounded px-3 py-1 text-sm hover:bg-slate-50">Cancel</button>
+        <button onclick="saveGrievance('${escHtml(g.id)}')" class="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1 text-sm">Save</button>
+      </div>
+    </div>`);
+    }
+    async function saveGrievance(id) {
+      const status = document.getElementById('grNewStatus').value;
+      const adminNote = document.getElementById('grNote').value;
+      const resp = await fetch(API_BASE + '/api/grievances/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, adminNote }),
+      });
+      if (!resp.ok) { alert('Could not save: HTTP ' + resp.status); return; }
+      const j = await resp.json();
+      const idx = DATA.grievances.findIndex(x => x.id === id);
+      if (idx >= 0 && j.item) DATA.grievances[idx] = j.item;
+      closeModal();
+      renderGrievances(document.getElementById('content'));
+    }
+
+    const AUDIT_PAGE_SIZE = 10;
+    let auditPage = 1;
+    let auditFiltered = [];
+    function renderAudit(c) {
+      auditFiltered = DATA.audit.slice();
+      auditPage = 1;
+      c.innerHTML = `
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">Audit log (${DATA.audit.length} events)</h3>
+        <div class="flex gap-2 text-xs">
+          <input id="auditFilter" oninput="filterAudit(this.value)" placeholder="Filter by user, action, IP or detail…" class="border rounded px-2 py-1 w-72" />
+          <button onclick="exportAuditCsv()" class="border rounded px-2 py-1 hover:bg-slate-50">Export CSV</button>
+        </div>
+      </div>
+      <table class="w-full text-sm font-mono">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-sans">
+          <tr><th class="px-5 py-3 text-left">Timestamp</th><th class="text-left">User</th><th class="text-left">Action</th><th class="text-left">IP</th><th class="text-left">Detail</th></tr>
+        </thead>
+        <tbody id="auditRows">${auditRowsHtml(auditPageSlice())}</tbody>
+      </table>
+      <div id="auditPager" class="px-5 py-3 border-t flex items-center justify-between text-xs text-slate-600 font-sans">${auditPagerHtml()}</div>
+    </div>`;
+    }
+    function auditPageSlice() {
+      const start = (auditPage - 1) * AUDIT_PAGE_SIZE;
+      return auditFiltered.slice(start, start + AUDIT_PAGE_SIZE);
+    }
+    function auditTotalPages() {
+      return Math.max(1, Math.ceil(auditFiltered.length / AUDIT_PAGE_SIZE));
+    }
+    function auditPagerHtml() {
+      const total = auditFiltered.length;
+      const pages = auditTotalPages();
+      const start = total ? (auditPage - 1) * AUDIT_PAGE_SIZE + 1 : 0;
+      const end = Math.min(total, auditPage * AUDIT_PAGE_SIZE);
+      return `
+        <span>Showing ${start}–${end} of ${total}</span>
+        <div class="flex items-center gap-2">
+          <button onclick="auditGoto(1)" ${auditPage <= 1 ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">«</button>
+          <button onclick="auditGoto(${auditPage - 1})" ${auditPage <= 1 ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">‹ Prev</button>
+          <span class="px-2">Page ${auditPage} / ${pages}</span>
+          <button onclick="auditGoto(${auditPage + 1})" ${auditPage >= pages ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">Next ›</button>
+          <button onclick="auditGoto(${pages})" ${auditPage >= pages ? 'disabled' : ''} class="border rounded px-2 py-1 hover:bg-slate-50 disabled:opacity-40">»</button>
+        </div>`;
+    }
+    function auditGoto(p) {
+      const pages = auditTotalPages();
+      auditPage = Math.min(Math.max(1, p), pages);
+      const rows = document.getElementById('auditRows');
+      const pager = document.getElementById('auditPager');
+      if (rows) rows.innerHTML = auditRowsHtml(auditPageSlice());
+      if (pager) pager.innerHTML = auditPagerHtml();
+    }
+    function auditRowsHtml(list) {
+      if (!list.length) return '<tr><td colspan="5" class="px-5 py-8 text-center text-slate-400 font-sans">No audit events.</td></tr>';
+      return list.map(a => {
+        const actCls = a.action.startsWith('WIPE') || a.action.endsWith('_DELETE') ? 'badge-crit'
+          : a.action.startsWith('THREAT') || a.action.startsWith('SOS') ? 'badge-high'
+            : a.action.startsWith('NEWS') ? 'badge-med' : 'badge-low';
+        return `<tr class="border-t hover:bg-slate-50">
+      <td class="px-5 py-3 text-xs whitespace-nowrap">${escHtml(a.ts)}</td>
+      <td class="text-blue-700 text-xs">${escHtml(a.user)}</td>
+      <td><span class="badge ${actCls}">${escHtml(a.action)}</span></td>
+      <td class="text-slate-500 text-xs">${escHtml(a.ip)}</td>
+      <td class="text-slate-700 text-xs font-sans">${escHtml(a.detail)}</td>
+    </tr>`;
+      }).join('');
+    }
+    function filterAudit(q) {
+      q = (q || '').toLowerCase();
+      auditFiltered = q ? DATA.audit.filter(a =>
+        (a.user || '').toLowerCase().includes(q) ||
+        (a.action || '').toLowerCase().includes(q) ||
+        (a.ip || '').toLowerCase().includes(q) ||
+        (a.detail || '').toLowerCase().includes(q)
+      ) : DATA.audit.slice();
+      auditPage = 1;
+      const rows = document.getElementById('auditRows');
+      const pager = document.getElementById('auditPager');
+      if (rows) rows.innerHTML = auditRowsHtml(auditPageSlice());
+      if (pager) pager.innerHTML = auditPagerHtml();
+    }
+    function exportAuditCsv() {
+      const q = (document.getElementById('auditFilter') || {}).value || '';
+      const ql = q.toLowerCase();
+      const rows = (ql ? DATA.audit.filter(a =>
+        (a.user || '').toLowerCase().includes(ql) ||
+        (a.action || '').toLowerCase().includes(ql) ||
+        (a.ip || '').toLowerCase().includes(ql) ||
+        (a.detail || '').toLowerCase().includes(ql)
+      ) : DATA.audit);
+      const esc = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
+      const csv = ['timestamp,user,action,ip,detail',
+        ...rows.map(a => [a.ts, a.user, a.action, a.ip, a.detail].map(esc).join(','))
+      ].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `cybersafe_audit_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderSettings(c) {
+      c.innerHTML = `
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 class="font-semibold mb-3">App configuration</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between"><span>Package name</span><span class="font-mono text-xs">com.cybersafe.app</span></div>
+          <div class="flex justify-between"><span>Min Android version</span><span class="font-mono text-xs">23 (Android 6.0)</span></div>
+          <div class="flex justify-between"><span>App version</span><span class="font-mono text-xs">0.1.0+1</span></div>
+          <div class="flex justify-between"><span>RASP isProd</span><span class="font-mono text-xs text-amber-600">false (dev)</span></div>
+          <div class="flex justify-between"><span>Watcher email</span><span class="font-mono text-xs">security@cybersafe.local</span></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 class="font-semibold mb-3">Languages enabled</h3>
+        <div class="space-y-2 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" checked /> English (en)</label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked /> Hindi (hi)</label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked /> Marathi (mr)</label>
+        </div>
+        <h3 class="font-semibold mt-5 mb-2">Accessibility</h3>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" checked /> Text-to-speech for advisories</label>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200">
+      <div class="px-5 py-3 border-b flex justify-between items-center">
+        <h3 class="font-semibold">External APIs &amp; integrations</h3>
+        <span class="text-xs text-slate-500">Last health check: ${escHtml(DATA.apisCheckedAt || '—')}</span>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr><th class="px-5 py-3 text-left">Service</th><th class="text-left">Purpose</th><th class="text-left">Status</th><th class="text-left">Details</th></tr>
+        </thead>
+        <tbody>${(DATA.apis || []).map(a => {
+        const cls = (a.status === 'Connected' || a.status === 'Active') ? 'badge-ok'
+          : (a.status || '').startsWith('Refresh') ? 'badge-med' : 'badge-crit';
+        const extras = [];
+        if (a.feed_size) extras.push(`${a.feed_size.toLocaleString()} URLs in feed`);
+        if (a.items) extras.push(`${a.items} stories cached`);
+        return `<tr class="border-t hover:bg-slate-50">
+            <td class="px-5 py-3 font-medium">${escHtml(a.name)}</td>
+            <td class="text-slate-600">${escHtml(a.purpose)}</td>
+            <td><span class="badge ${cls}">${escHtml(a.status)}</span></td>
+            <td class="text-slate-500 text-xs">${escHtml(extras.join(' · '))}</td>
+          </tr>`;
+      }).join('')}</tbody>
+      </table>
+    </div>`;
+    }
+
+    // ============ MODAL / UTILS ============
+    function showModal(html) { const m = document.getElementById('modal'); m.innerHTML = html; m.classList.remove('hidden'); }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('modal').innerHTML = ''; }
+    function auditPush(entry) {
+      // optimistic local insert so the UI updates immediately
+      DATA.audit.unshift({ ts: entry.ts || now(), user: entry.user || 'admin', action: entry.action, ip: entry.ip || '-', detail: entry.detail || '' });
+      // persist server-side (fire-and-forget)
+      fetch(API_BASE + '/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: entry.action, user: entry.user || 'admin', detail: entry.detail || '' }),
+      }).catch(() => { });
+    }
+    function now() { return new Date().toISOString().replace('T', ' ').slice(0, 19); }
+
+    // Initial language wiring
+    document.getElementById('langSelect').value = LANG;
+    document.documentElement.lang = LANG;
+    applyI18n();
+
+    // ============ DARK MODE ============
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark');
+      document.getElementById('darkToggle').classList.toggle('active', isDark);
+      localStorage.setItem('mcs_admin_dark', isDark ? '1' : '0');
+      // Update chart colors if charts exist
+      updateChartTheme(isDark);
+    }
+    function updateChartTheme(isDark) {
+      Chart.defaults.color = isDark ? '#94a3b8' : '#666';
+      Chart.defaults.borderColor = isDark ? '#1e293b' : '#e5e7eb';
+      // Re-render current page to rebuild charts with new theme
+      const active = document.querySelector('.nav-link.active');
+      if (active && !document.getElementById('app').classList.contains('hidden')) {
+        nav(active.dataset.route);
+      }
+    }
+    // Expose globally so any inline handler (or console) can hit it
+    window.toggleDarkMode = toggleDarkMode;
+
+    // Restore dark mode preference + bind click explicitly (defensive — works even
+    // if the inline onclick attribute is stripped by an extension/CSP).
+    (function initDarkMode() {
+      const btn = document.getElementById('darkToggle');
+      const saved = localStorage.getItem('mcs_admin_dark');
+      // Cyber command-center: dark is the default. User can opt out via toggle (saves '0').
+      if (saved !== '0') {
+        document.body.classList.add('dark');
+        if (btn) btn.classList.add('active');
+        Chart.defaults.color = '#B8B0CC';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+      }
+      if (btn && !btn.dataset.bound) {
+        btn.addEventListener('click', toggleDarkMode);
+        btn.dataset.bound = '1';
+      }
+      // Also let users click the sun/moon icons around the toggle
+      document.querySelectorAll('.dark-toggle-wrap .toggle-icon').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', toggleDarkMode);
+      });
+    })();
+
+    // Auto-refresh from backend every 10s while logged in
+    setInterval(() => {
+      if (document.getElementById('app').classList.contains('hidden')) return;
+      document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+      refreshFromBackend();
+    }, 10000);
+  </script>
+</body>
+
+</html>
